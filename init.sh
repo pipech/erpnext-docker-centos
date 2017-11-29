@@ -1,3 +1,5 @@
+# if Error > line 1: $'\r': command not found
+# Using Notepad++ change Edit> EOL Conversion> Unix
 
 if [ -d "/home/frappe/frappe-bench/apps-temp" ]; then
 

@@ -17,19 +17,20 @@ WORKDIR /home/frappe
 
 RUN wget https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py \
 	&& sudo python install.py --develop --mysql-root-password 12345 --admin-password frappe
-
+	
 WORKDIR /home/frappe/frappe-bench
+
+RUN cd /home/frappe/frappe-bench/apps/frappe \
+	&& git checkout -b master
 	
 RUN sudo service mysql start \
 	&& bench new-site site1.local --mariadb-root-password 12345 --admin-password frappe
 
-RUN bench get-app erpnext https://github.com/frappe/erpnext \
-	&& cd /home/frappe/frappe-bench/apps/erpnext \
-	&& git checkout 15f8fe01794101f91b083c28cf7971a7077bbca5
+RUN bench get-app erpnext https://github.com/frappe/erpnext --branch master
 
 RUN sudo service mysql start \
 	&& bench --site site1.local install-app erpnext
-
+	
 RUN sudo mv /home/frappe/frappe-bench/apps /home/frappe/frappe-bench/apps-temp \
 	&& sudo mv /home/frappe/frappe-bench/sites /home/frappe/frappe-bench/sites-temp
 	
