@@ -2,7 +2,8 @@ version: '3'
 
 services:
     erpNext:
-        image: "cent.erpnext:001"
+        build: .
+        image: cent.erpnext
         volumes:
             - .\frappe-bench\apps:/home/frappe/frappe-bench/apps
             - .\frappe-bench\sites:/home/frappe/frappe-bench/sites
