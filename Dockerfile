@@ -1,5 +1,6 @@
 FROM centos:7.4.1708
 
+# install prerequisite
 RUN yum -y install \
 	build-essential \
 	python-setuptools \
@@ -7,37 +8,35 @@ RUN yum -y install \
 	nano \
 	sudo
 
-RUN useradd frappe \
-	&& usermod -aG wheel frappe \
-	&& usermod -aG wheel root \
-	&& echo "%wheel  ALL=(ALL)  NOPASSWD: ALL" > /etc/sudoers
+# add users without sudo password
+ENV SYSTEMUSER=frappe
+
+RUN useradd $SYSTEMUSER \
+	&& usermod -aG wheel $SYSTEMUSER \
+	&& echo "%wheel  ALL=(ALL)  NOPASSWD: ALL" > /etc/sudoers.d/sudoers
 	
-USER frappe
-WORKDIR /home/frappe
+# install bench with easy install script
+ENV ADMINPASS=12345 \
+	MYSQLPASS=12345 \
+	BENCHSETUP=develop \
+	BENCHNAME=bench-dev
 
 RUN wget https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py \
-	&& sudo python install.py --develop --mysql-root-password 12345 --admin-password frappe
-	
-WORKDIR /home/frappe/frappe-bench
+	&& python install.py --without-site --$BENCHSETUP --mysql-root-password $MYSQLPASS --admin-password $ADMINPASS --user $SYSTEMUSER --bench-name $BENCHNAME
 
-RUN cd /home/frappe/frappe-bench/apps/frappe \
-	&& git checkout -b master
-	
-RUN sudo service mysql start \
-	&& bench new-site site1.local --mariadb-root-password 12345 --admin-password frappe
+USER $SYSTEMUSER
+WORKDIR /home/$SYSTEMUSER/$BENCHNAME
 
-RUN bench get-app erpnext https://github.com/frappe/erpnext --branch master
+# create new site & install erpnext
+ENV SITENAME=site1.local \
+	ERPNEXT_REPO=https://github.com/frappe/erpnext \
+	ERPNEXT_BRANCH=develop
 
 RUN sudo service mysql start \
-	&& bench --site site1.local install-app erpnext
+	&& bench new-site $SITENAME --mariadb-root-password $MYSQLPASS --admin-password $ADMINPASS \
+	&& bench get-app erpnext $ERPNEXT_REPO  --branch $ERPNEXT_BRANCH \
+	&& bench --site $SITENAME install-app erpnext
 	
-RUN sudo mv /home/frappe/frappe-bench/apps /home/frappe/frappe-bench/apps-temp \
-	&& sudo mv /home/frappe/frappe-bench/sites /home/frappe/frappe-bench/sites-temp
-	
-COPY ./init.sh /home/frappe/ 
-	
-CMD sudo service mysql start \
-	&& /home/frappe/init.sh \
-	&& /bin/bash
+WORKDIR /home/$SYSTEMUSER/frappe-bench
 
 EXPOSE 8000 8001 8002 8003 8004 8005 3306 3307 3308
