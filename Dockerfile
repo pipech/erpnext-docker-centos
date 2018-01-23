@@ -1,42 +1,61 @@
 FROM centos:7.4.1708
 
 # install prerequisite
-RUN yum -y install \
+RUN yum -y update \
+    && yum -y install \
 	build-essential \
 	python-setuptools \
 	wget \
 	nano \
 	sudo
 
+# install NodeJS 8.x
+RUN curl -sL https://rpm.nodesource.com/setup_8.x | sudo -E bash - \
+    && sudo yum install -y nodejs
+
 # add users without sudo password
-ENV SYSTEMUSER=frappe
+ENV systemUser=frappe
 
-RUN useradd $SYSTEMUSER \
-	&& usermod -aG wheel $SYSTEMUSER \
+RUN useradd $systemUser \
+	&& usermod -aG wheel $systemUser \
 	&& echo "%wheel  ALL=(ALL)  NOPASSWD: ALL" > /etc/sudoers.d/sudoers
-	
+
 # install bench with easy install script
-ENV ADMINPASS=12345 \
-	MYSQLPASS=12345 \
-	BENCHSETUP=develop \
-	BENCHNAME=bench-dev
+ENV easyinstallRepo='https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py' \
+    adminPass=12345 \
+	mysqlPass=12345 \
+	benchSetup=develop \
+	benchBranch=master \
+	benchName=bench-dev
 
-RUN wget https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py \
-	&& python install.py --without-site --$BENCHSETUP --mysql-root-password $MYSQLPASS --admin-password $ADMINPASS --user $SYSTEMUSER --bench-name $BENCHNAME
+RUN wget $easyinstallRepo \
+	&& python install.py \
+	--without-site \
+	--$benchSetup \
+	--mysql-root-password $mysqlPass  \
+	--admin-password $adminPass  \
+	--user $systemUser  \
+	--bench-name $benchName  \
+	--bench-branch $benchBranch
 
-USER $SYSTEMUSER
-WORKDIR /home/$SYSTEMUSER/$BENCHNAME
+# set user and workdir
+USER $systemUser
+WORKDIR /home/$systemUser/$benchName
 
-# create new site & install erpnext
-ENV SITENAME=site1.local \
-	ERPNEXT_REPO=https://github.com/frappe/erpnext \
-	ERPNEXT_BRANCH=develop
+# create new site & install erpnext & switch to branch master
+ENV erpnextRepo='https://github.com/frappe/erpnext' \
+    siteName=site1.local \
+    branch=master
 
-RUN sudo service mysql start \
-	&& bench new-site $SITENAME --mariadb-root-password $MYSQLPASS --admin-password $ADMINPASS \
-	&& bench get-app erpnext $ERPNEXT_REPO  --branch $ERPNEXT_BRANCH \
-	&& bench --site $SITENAME install-app erpnext
-	
-WORKDIR /home/$SYSTEMUSER/frappe-bench
+RUN  sudo service mysql start \
+    && bench new-site $siteName \
+    --mariadb-root-password $mysqlPass  \
+    --admin-password $adminPass \
 
+	&& bench get-app erpnext $erpnextRepo \
+	&& bench --site $siteName install-app erpnext \
+    && bench switch-to-branch $branch \
+    && bench update --patch
+
+# expose port
 EXPOSE 8000 8001 8002 8003 8004 8005 3306 3307 3308
