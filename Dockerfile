@@ -48,12 +48,14 @@ ENV erpnextRepo='https://github.com/frappe/erpnext' \
     branch=master
 
 RUN  sudo service mysql start \
+    # create new site
     && bench new-site $siteName \
     --mariadb-root-password $mysqlPass  \
     --admin-password $adminPass \
-
+    # install erpnext
 	&& bench get-app erpnext $erpnextRepo \
 	&& bench --site $siteName install-app erpnext \
+	# switch to master branch
     && bench switch-to-branch $branch \
     && bench update --patch
 
