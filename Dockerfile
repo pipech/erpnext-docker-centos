@@ -59,5 +59,9 @@ RUN  sudo service mysql start \
     && bench switch-to-branch $branch \
     && bench update --patch
 
+# add entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+CMD /entrypoint.sh
+
 # expose port
 EXPOSE 8000 8001 8002 8003 8004 8005 3306 3307 3308
