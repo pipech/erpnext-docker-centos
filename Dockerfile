@@ -3,11 +3,11 @@ FROM centos:7.4.1708
 # install prerequisite
 RUN yum -y update \
     && yum -y install \
-	build-essential \
-	python-setuptools \
-	wget \
-	nano \
-	sudo
+    build-essential \
+    python-setuptools \
+    wget \
+    nano \
+    sudo
 
 # install NodeJS 8.x
 RUN curl -sL https://rpm.nodesource.com/setup_8.x | sudo -E bash - \
@@ -17,26 +17,26 @@ RUN curl -sL https://rpm.nodesource.com/setup_8.x | sudo -E bash - \
 ENV systemUser=frappe
 
 RUN useradd $systemUser \
-	&& usermod -aG wheel $systemUser \
-	&& echo "%wheel  ALL=(ALL)  NOPASSWD: ALL" > /etc/sudoers.d/sudoers
+    && usermod -aG wheel $systemUser \
+    && echo "%wheel  ALL=(ALL)  NOPASSWD: ALL" > /etc/sudoers.d/sudoers
 
 # install bench with easy install script
 ENV easyinstallRepo='https://raw.githubusercontent.com/frappe/bench/master/playbooks/install.py' \
     adminPass=12345 \
-	mysqlPass=12345 \
-	benchSetup=develop \
-	benchBranch=master \
-	benchName=bench-dev
+    mysqlPass=12345 \
+    benchSetup=develop \
+    benchBranch=master \
+    benchName=bench-dev
 
 RUN wget $easyinstallRepo \
-	&& python install.py \
-	--without-site \
-	--$benchSetup \
-	--mysql-root-password $mysqlPass  \
-	--admin-password $adminPass  \
-	--user $systemUser  \
-	--bench-name $benchName  \
-	--bench-branch $benchBranch
+    && python install.py \
+    --without-site \
+    --$benchSetup \
+    --mysql-root-password $mysqlPass  \
+    --admin-password $adminPass  \
+    --user $systemUser  \
+    --bench-name $benchName  \
+    --bench-branch $benchBranch
 
 # set user and workdir
 USER $systemUser
@@ -53,9 +53,9 @@ RUN  sudo service mysql start \
     --mariadb-root-password $mysqlPass  \
     --admin-password $adminPass \
     # install erpnext
-	&& bench get-app erpnext $erpnextRepo \
-	&& bench --site $siteName install-app erpnext \
-	# switch to master branch
+    && bench get-app erpnext $erpnextRepo \
+    && bench --site $siteName install-app erpnext \
+    # switch to master branch
     && bench switch-to-branch $branch \
     && bench update --patch
 
