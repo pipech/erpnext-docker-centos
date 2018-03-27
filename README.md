@@ -1,3 +1,8 @@
+## Hi, you might want to check this [ERPNext Docker Debian](https://github.com/pipech/erpnext-docker-debian).
+I believe it's more stable and dockerfile and readme file is better written.
+
+---
+
 #  Dockerfile for building Self-contained ERPNext Image on CentOs
 
 This repository contain Dockerfile use to build Docker Images in Docker Hub [**pipech/erpnext**](https://hub.docker.com/r/pipech/erpnext/)

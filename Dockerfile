@@ -7,8 +7,7 @@ RUN yum -y update \
     python-setuptools \
     wget \
     nano \
-    sudo \
-    supervisor
+    sudo
 
 # install NodeJS 8.x
 RUN curl -sL https://rpm.nodesource.com/setup_8.x | sudo -E bash - \
@@ -60,5 +59,10 @@ RUN  sudo service mysql start \
     && bench switch-to-branch $branch \
     && bench update --patch
 
+# install supervisor to be use in production setup
+RUN sudo yum -y update \
+    && sudo yum -y install \
+    supervisor
+	
 # expose port
 EXPOSE 8000 8001 8002 8003 8004 8005 3306 3307 3308
